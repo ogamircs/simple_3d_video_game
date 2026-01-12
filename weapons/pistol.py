@@ -2,7 +2,7 @@
 Pistol Weapon
 Hitscan weapon with moderate damage and fire rate.
 """
-from ursina import Entity, raycast, camera, Vec3, color, random
+from ursina import Entity, raycast, camera, Vec3, color, random, Audio
 from weapons.base_weapon import BaseWeapon
 from config import WEAPONS
 
@@ -89,6 +89,9 @@ class Pistol(BaseWeapon):
         Args:
             owner: The entity firing (player)
         """
+        # Play shotgun sound
+        Audio('assets/sounds/shotgun.wav', autoplay=True)
+
         # Get shoot origin and direction - shoot straight at crosshair
         origin = owner.get_shoot_origin()
         direction = owner.get_shoot_direction()
@@ -128,6 +131,9 @@ class Pistol(BaseWeapon):
 
         # Apply damage if target has take_damage method
         if hasattr(target, 'take_damage'):
+            # Play hit sound
+            Audio('assets/sounds/hit.wav', autoplay=True)
+
             from systems.combat_system import CombatSystem
             CombatSystem.apply_damage(
                 target=target,

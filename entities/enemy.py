@@ -2,7 +2,7 @@
 Base Enemy Class
 Enemy with AI state machine: IDLE -> CHASE -> ATTACK.
 """
-from ursina import Entity, Vec3, time, destroy, invoke, color, distance
+from ursina import Entity, Vec3, time, destroy, invoke, color, distance, Audio
 from entities.base_entity import BaseGameEntity
 from config import ENEMIES, GameState
 
@@ -220,6 +220,9 @@ class Enemy(BaseGameEntity):
         """Handle enemy death."""
         self.state = EnemyState.DEAD
         self.collider = None
+
+        # Play death sound
+        Audio('assets/sounds/enemy_death.wav', autoplay=True)
 
         # Clean up health bar
         if self.health_bar_bg:

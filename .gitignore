@@ -1,0 +1,33 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude temp files
+.claude/
+tmpclaude-*
+
+# Log files
+*.log
+game_stdout.txt
+game_stderr.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+nul
+
+# Compressed models (if not needed)
+models_compressed/

@@ -147,6 +147,29 @@ WALL_HEIGHT = 4
 WALL_THICKNESS = 1
 
 # =============================================================================
+# PROGRESSION SETTINGS (P1)
+# =============================================================================
+MAX_WAVES = 5
+BASE_ENEMIES_PER_WAVE = 5
+ENEMIES_PER_WAVE_STEP = 2
+BASE_SPAWN_INTERVAL = 1.2
+SPAWN_INTERVAL_DECAY = 0.1
+MIN_SPAWN_INTERVAL = 0.45
+WAVE_BREAK_DURATION = 3.0
+SPAWN_MIN_PLAYER_DISTANCE = 12
+SPAWN_DIRECTOR_LOS_ATTEMPTS = 16
+
+PICKUP_MAX_ACTIVE = 2
+PICKUP_SPAWN_COOLDOWN = 8.0
+PICKUP_LIFETIME = 18.0
+HEALTH_PICKUP_VALUE = 30
+AMMO_PICKUP_VALUE = 8
+
+SCORE_REWARD_STEP = 50
+SCORE_REWARD_HEAL = 15
+SCORE_REWARD_AMMO = 6
+
+# =============================================================================
 # GAME STATES
 # =============================================================================
 class GameState:
@@ -154,3 +177,4 @@ class GameState:
     PLAYING = 'playing'
     PAUSED = 'paused'
     GAME_OVER = 'game_over'
+    VICTORY = 'victory'

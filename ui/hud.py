@@ -2,13 +2,15 @@
 HUD (Heads-Up Display)
 Doom-style status bar at the bottom of the screen.
 """
-from ursina import Entity, Text, camera, color, invoke, destroy
+import math
+from ursina import Entity, Text, camera, color, invoke, destroy, time
 from config import (
     UI_FONT_PRIMARY,
     UI_FONT_MONO,
     HUD_VALUE_TEXT_SCALE,
     HUD_LABEL_TEXT_SCALE,
-    RuntimeSettings
+    RuntimeSettings,
+    GameState
 )
 from ui.crosshair import Crosshair
 from ui.damage_indicator import DamageIndicator
@@ -195,6 +197,40 @@ class HUD(Entity):
         self.damage_indicator = DamageIndicator(parent=self)
 
         self.kills = 0
+        self.event_timer = 0
+
+        # Top HUD for wave/objective context.
+        self.wave_text = Text(
+            parent=self,
+            text='WAVE 1/1',
+            position=(-0.86, 0.46),
+            origin=(0, 0),
+            scale=0.85 * self.ui_scale,
+            color=color.azure,
+            font=UI_FONT_MONO,
+            z=-1
+        )
+        self.objective_text = Text(
+            parent=self,
+            text='',
+            position=(0, 0.46),
+            origin=(0, 0),
+            scale=0.78 * self.ui_scale,
+            color=color.light_gray,
+            font=UI_FONT_PRIMARY,
+            z=-1
+        )
+        self.event_text = Text(
+            parent=self,
+            text='',
+            position=(0, 0.38),
+            origin=(0, 0),
+            scale=0.85 * self.ui_scale,
+            color=color.yellow,
+            font=UI_FONT_PRIMARY,
+            z=-1,
+            enabled=False
+        )
 
     def update(self):
         if not self.player:
@@ -209,11 +245,27 @@ class HUD(Entity):
 
         import game_state
         if game_state.game:
-            self.score_text.text = f'{game_state.game.score}'
-            self.kills = game_state.game.score // 10
+            game = game_state.game
+            self.score_text.text = f'{game.score}'
+            self.kills = game.score // 10
             self.kills_text.text = f'{self.kills}'
+            self.wave_text.text = f'WAVE {game.current_wave}/{game.max_waves}'
+
+            if game.wave_in_progress:
+                remaining = game.wave_enemies_remaining()
+                self.objective_text.text = f'Enemies remaining: {remaining}'
+            elif game.current_wave >= game.max_waves and game.state == GameState.VICTORY:
+                self.objective_text.text = 'Objective complete'
+            else:
+                seconds = max(0, int(math.ceil(game.wave_break_timer)))
+                self.objective_text.text = f'Next wave in {seconds}'
 
         self.damage_indicator.show_low_health_warning(self.player.health_percentage)
+
+        if self.event_timer > 0:
+            self.event_timer -= time.dt
+            if self.event_timer <= 0:
+                self.event_text.enabled = False
 
     def on_player_damaged(self, amount, source=None):
         self.health_text.color = color.rgb(255, 170, 170)
@@ -222,6 +274,12 @@ class HUD(Entity):
 
     def show_hit_marker(self):
         self.crosshair.show_hit()
+
+    def show_event(self, message, duration=2.0):
+        """Show a short event message near the top of the screen."""
+        self.event_text.text = message
+        self.event_text.enabled = True
+        self.event_timer = duration
 
     def _reset_health_color(self):
         self.health_text.color = color.red

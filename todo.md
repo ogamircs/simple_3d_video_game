@@ -32,19 +32,19 @@
 ## Prioritized TODO
 
 ## P0 - Immediate polish and stability
-- [ ] Centralize all UI scale/font constants in `config.py` and use them everywhere in UI modules.
-- [ ] Add a runtime UI scale multiplier (small/normal/large) in options menu.
-- [ ] Add options menu: mouse sensitivity, audio volume, fullscreen toggle, FOV slider.
-- [ ] Replace remaining placeholder/pass UI hooks with real behavior (damage feedback, hit confirmation consistency).
-- [ ] Standardize text alignment/anchors for all HUD values to avoid drift across resolutions.
-- [ ] Add a basic pause-state input lock test checklist (no shooting/moving while paused).
+- [x] Centralize all UI scale/font constants in `config.py` and use them everywhere in UI modules.
+- [x] Add a runtime UI scale multiplier (small/normal/large) in options menu.
+- [x] Add options menu: mouse sensitivity, audio volume, fullscreen toggle, FOV slider.
+- [x] Replace remaining placeholder/pass UI hooks with real behavior (damage feedback, hit confirmation consistency).
+- [x] Standardize text alignment/anchors for all HUD values to avoid drift across resolutions.
+- [x] Add a basic pause-state input lock test checklist (no shooting/moving while paused).
 
 ## P1 - Make the gameplay loop actually sticky
-- [ ] Implement wave-based spawning with increasing difficulty over time.
-- [ ] Add a clear run objective (survive X waves or reach score threshold) and victory screen.
-- [ ] Add spawn director logic (spawn timing + location bias away from player line-of-sight).
-- [ ] Add health/ammo pickups with spawn rules and cooldowns.
-- [ ] Tie score to gameplay utility (temporary buffs, weapon unlocks, or buy station).
+- [x] Implement wave-based spawning with increasing difficulty over time.
+- [x] Add a clear run objective (survive X waves or reach score threshold) and victory screen.
+- [x] Add spawn director logic (spawn timing + location bias away from player line-of-sight).
+- [x] Add health/ammo pickups with spawn rules and cooldowns.
+- [x] Tie score to gameplay utility (temporary buffs, weapon unlocks, or buy station).
 
 ## P2 - Combat and enemy depth
 - [ ] Implement at least two additional enemy archetypes using existing config (`demon`, `imp`) with distinct behaviors.

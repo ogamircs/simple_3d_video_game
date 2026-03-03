@@ -422,8 +422,38 @@ class MainMenu(Entity):
 
         # Show game over elements
         self.game_over_title.enabled = True
+        self.game_over_title.text = 'GAME OVER'
         self.final_score.enabled = True
         self.final_score.text = f'Final Score: {score}'
+        self.play_again_button.enabled = True
+        self.quit_to_menu_button.enabled = True
+        self.quit_to_menu_button.y = -0.24
+
+    def show_victory(self, score=0, waves=0):
+        """Show victory screen when the objective is completed."""
+        self.mode = 'game_over'
+        self.enabled = True
+        self.background.enabled = True
+        self.apply_menu_ui_scale()
+
+        # Hide other elements
+        self.title.enabled = False
+        self.subtitle.enabled = False
+        self.controls.enabled = False
+        for btn in self.main_buttons:
+            btn.enabled = False
+        self.pause_title.enabled = False
+        self.resume_button.enabled = False
+        self.restart_button.enabled = False
+        self.pause_options_button.enabled = False
+        self.quit_to_menu_button.enabled = False
+        self._set_options_visible(False)
+
+        # Show victory elements
+        self.game_over_title.enabled = True
+        self.game_over_title.text = 'VICTORY'
+        self.final_score.enabled = True
+        self.final_score.text = f'Score: {score} | Waves: {waves}'
         self.play_again_button.enabled = True
         self.quit_to_menu_button.enabled = True
         self.quit_to_menu_button.y = -0.24

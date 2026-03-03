@@ -13,6 +13,7 @@ class BaseWeapon(Entity):
         weapon_name='weapon',
         damage=10,
         fire_rate=0.5,
+        alt_fire_cooldown=2.0,
         range_distance=100,
         spread=0.01,
         ammo_max=50,
@@ -24,6 +25,7 @@ class BaseWeapon(Entity):
         self.weapon_name = weapon_name
         self.damage = damage
         self.fire_rate = fire_rate
+        self.alt_fire_cooldown = alt_fire_cooldown
         self.range_distance = range_distance
         self.spread = spread
         self.ammo_max = ammo_max
@@ -31,6 +33,7 @@ class BaseWeapon(Entity):
 
         # State
         self.time_since_fire = fire_rate  # Ready to fire immediately
+        self.time_since_alt_fire = alt_fire_cooldown
         self.is_equipped = False
         self.is_reloading = False
 
@@ -47,6 +50,7 @@ class BaseWeapon(Entity):
     def update(self):
         """Update weapon state each frame."""
         self.time_since_fire += time.dt
+        self.time_since_alt_fire += time.dt
 
     def can_fire(self):
         """Check if the weapon can fire."""
@@ -68,6 +72,27 @@ class BaseWeapon(Entity):
         self.show_muzzle_flash()
         return True
 
+    def can_alt_fire(self):
+        """Check if alt fire can be used."""
+        return (
+            self.is_equipped and
+            not self.is_reloading and
+            self.time_since_alt_fire >= self.alt_fire_cooldown and
+            self.ammo_current > 0
+        )
+
+    def try_alt_fire(self, owner):
+        """Attempt to use alt fire."""
+        if not self.can_alt_fire():
+            return False
+
+        ammo_spent = self.alt_fire(owner)
+        if ammo_spent is None:
+            ammo_spent = 0
+        self.ammo_current = max(0, self.ammo_current - int(ammo_spent))
+        self.time_since_alt_fire = 0
+        return True
+
     def fire(self, owner):
         """
         Fire the weapon. Override in subclasses.
@@ -76,6 +101,15 @@ class BaseWeapon(Entity):
             owner: The entity firing the weapon (usually player)
         """
         raise NotImplementedError("Subclasses must implement fire()")
+
+    def alt_fire(self, owner):
+        """
+        Optional alt fire hook.
+
+        Return:
+            int ammo consumed by alt fire.
+        """
+        return 0
 
     def reload(self):
         """Reload the weapon."""

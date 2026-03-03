@@ -23,6 +23,7 @@ tmpclaude-*
 *.log
 game_stdout.txt
 game_stderr.txt
+gameplay.log
 
 # OS files
 .DS_Store

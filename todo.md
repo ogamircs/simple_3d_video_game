@@ -47,30 +47,30 @@
 - [x] Tie score to gameplay utility (temporary buffs, weapon unlocks, or buy station).
 
 ## P2 - Combat and enemy depth
-- [ ] Implement at least two additional enemy archetypes using existing config (`demon`, `imp`) with distinct behaviors.
-- [ ] Add ranged projectile logic for `imp` with telegraphed windup.
-- [ ] Add hit reaction states/stagger chance for enemies on high-damage hits.
-- [ ] Add at least one additional weapon with different role (close burst vs precision vs crowd control).
-- [ ] Introduce optional alt-fire or cooldown abilities to break repetitive shooting rhythm.
+- [x] Implement at least two additional enemy archetypes using existing config (`demon`, `imp`) with distinct behaviors.
+- [x] Add ranged projectile logic for `imp` with telegraphed windup.
+- [x] Add hit reaction states/stagger chance for enemies on high-damage hits.
+- [x] Add at least one additional weapon with different role (close burst vs precision vs crowd control).
+- [x] Introduce optional alt-fire or cooldown abilities to break repetitive shooting rhythm.
 
 ## P3 - Level and encounter design
-- [ ] Add multiple arenas or procedural arena variants (layout seeds).
-- [ ] Improve cover placement and pathing lanes to encourage movement decisions.
-- [ ] Add hazard or interactive elements (explosive barrels, temporary doors, traps).
-- [ ] Add spawn blockers to prevent enemies spawning in immediate view unless intentional.
+- [x] Add multiple arenas or procedural arena variants (layout seeds).
+- [x] Improve cover placement and pathing lanes to encourage movement decisions.
+- [x] Add hazard or interactive elements (explosive barrels, temporary doors, traps).
+- [x] Add spawn blockers to prevent enemies spawning in immediate view unless intentional.
 
 ## P4 - Audio/visual feedback
-- [ ] Add layered audio mix (ambient loop, combat intensity, low-health cue).
-- [ ] Add stronger VFX for hit/kill/headshot (flash, particles, subtle camera impulse).
-- [ ] Add screen-space feedback for major events (wave start, elite spawn, objective complete).
-- [ ] Preload frequently used sounds to avoid runtime hitching from on-demand loads.
+- [x] Add layered audio mix (ambient loop, combat intensity, low-health cue).
+- [x] Add stronger VFX for hit/kill/headshot (flash, particles, subtle camera impulse).
+- [x] Add screen-space feedback for major events (wave start, elite spawn, objective complete).
+- [x] Preload frequently used sounds to avoid runtime hitching from on-demand loads.
 
 ## P5 - Code quality and maintainability
-- [ ] Reduce global coupling by introducing a lightweight event bus or service container.
-- [ ] Move game constants into typed config structures for safer evolution.
-- [ ] Add smoke tests for critical flows: game start, restart, pause/resume, game over.
-- [ ] Add a minimal balancing doc (enemy HP/damage/speed and weapon DPS assumptions).
-- [ ] Add logging hooks for combat events and spawn telemetry to support tuning.
+- [x] Reduce global coupling by introducing a lightweight event bus or service container.
+- [x] Move game constants into typed config structures for safer evolution.
+- [x] Add smoke tests for critical flows: game start, restart, pause/resume, game over.
+- [x] Add a minimal balancing doc (enemy HP/damage/speed and weapon DPS assumptions).
+- [x] Add logging hooks for combat events and spawn telemetry to support tuning.
 
 ---
 

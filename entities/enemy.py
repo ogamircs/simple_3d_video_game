@@ -4,7 +4,11 @@ Enemy with AI state machine: IDLE -> CHASE -> ATTACK.
 """
 from ursina import Entity, Vec3, time, destroy, invoke, color, distance, Audio
 from entities.base_entity import BaseGameEntity
-from config import ENEMIES, GameState
+from config import (
+    ENEMIES, GameState,
+    ENEMY_STAGGER_THRESHOLD, ENEMY_STAGGER_CHANCE, ENEMY_STAGGER_DURATION
+)
+from core.services import Services
 
 
 class EnemyState:
@@ -60,6 +64,7 @@ class Enemy(BaseGameEntity):
         self.prev_state = None
         self.target = None
         self.time_since_attack = self.attack_cooldown
+        self.stagger_timer = 0
 
         # Store config for health bar positioning
         self.model_height = config.get('model_height', config['scale'][1])
@@ -95,6 +100,11 @@ class Enemy(BaseGameEntity):
         # Check game state
         import main
         if main.game and main.game.state != GameState.PLAYING:
+            return
+
+        # Stagger interrupt.
+        if self.stagger_timer > 0:
+            self.stagger_timer -= time.dt
             return
 
         if not self.target or not self.target.is_alive:
@@ -216,6 +226,21 @@ class Enemy(BaseGameEntity):
         # Flash on damage
         self.blink(color.red, duration=0.1)
 
+        # High damage hits can stagger enemies briefly.
+        from random import random
+        if amount >= ENEMY_STAGGER_THRESHOLD and random() < ENEMY_STAGGER_CHANCE:
+            self.stagger_timer = ENEMY_STAGGER_DURATION
+            self.animate_scale(self.scale * 0.94, duration=0.06)
+            self.animate_scale(self.scale, duration=0.08, delay=0.06)
+
+        if Services.telemetry:
+            Services.telemetry.log(
+                'enemy_damaged',
+                enemy_type=self.enemy_type,
+                damage=amount,
+                hp=self.health
+            )
+
     def on_death(self):
         """Handle enemy death."""
         self.state = EnemyState.DEAD
@@ -234,7 +259,23 @@ class Enemy(BaseGameEntity):
         if game_state.game:
             game_state.game.on_enemy_killed(self)
 
+        if Services.event_bus:
+            Services.event_bus.emit('enemy_killed', enemy=self)
+        if Services.telemetry:
+            Services.telemetry.log('enemy_killed', enemy_type=self.enemy_type, x=round(self.x, 2), z=round(self.z, 2))
+
         # Death animation
+        death_flash = Entity(
+            model='sphere',
+            position=self.position + Vec3(0, self.model_height * 0.5, 0),
+            scale=0.2,
+            color=color.orange
+        )
+        death_flash.animate_scale(1.2, duration=0.2)
+        death_flash.animate_color(color.clear, duration=0.2)
+        invoke(destroy, death_flash, delay=0.22)
+
+        self.animate_color(color.clear, duration=0.25)
         self.animate_scale(0, duration=0.3)
         invoke(destroy, self, delay=0.3)
 

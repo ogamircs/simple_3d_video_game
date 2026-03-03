@@ -74,11 +74,12 @@ class BaseWeapon(Entity):
 
     def can_alt_fire(self):
         """Check if alt fire can be used."""
+        ammo_cost = max(1, int(self.alt_fire_ammo_cost()))
         return (
             self.is_equipped and
             not self.is_reloading and
             self.time_since_alt_fire >= self.alt_fire_cooldown and
-            self.ammo_current > 0
+            self.ammo_current >= ammo_cost
         )
 
     def try_alt_fire(self, owner):
@@ -87,8 +88,8 @@ class BaseWeapon(Entity):
             return False
 
         ammo_spent = self.alt_fire(owner)
-        if ammo_spent is None:
-            ammo_spent = 0
+        if ammo_spent is None or int(ammo_spent) <= 0:
+            return False
         self.ammo_current = max(0, self.ammo_current - int(ammo_spent))
         self.time_since_alt_fire = 0
         return True
@@ -110,6 +111,10 @@ class BaseWeapon(Entity):
             int ammo consumed by alt fire.
         """
         return 0
+
+    def alt_fire_ammo_cost(self):
+        """Expected alt-fire ammo cost used for readiness checks."""
+        return 1
 
     def reload(self):
         """Reload the weapon."""

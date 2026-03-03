@@ -1,46 +1,73 @@
-# Doom-like FPS Game
+﻿# Doom-like FPS Game
 
-A retro-style first-person shooter inspired by classic Doom, built with Python and the Ursina game engine.
+A retro-style first-person shooter inspired by classic Doom, built with Python and the Ursina engine.
 
-## Features
+## Current Gameplay
 
-- **Classic FPS Gameplay**: First-person shooter with WASD movement and mouse look
-- **Doom-style HUD**: Status bar at the bottom showing AMMO, HEALTH, player face, SCORE, and KILLS
-- **Shotgun with Recoil**: 3D shotgun model with realistic recoil animation
-- **Enemy AI**: Zombies that chase and attack the player with state machine AI (IDLE, CHASE, ATTACK)
-- **Combat System**: Hitscan shooting mechanics with hit effects
-- **Enclosed Arena**: Walled level with pillars for cover
+- Wave-based survival loop with escalating pressure and a victory objective.
+- Multiple enemy archetypes:
+  - Zombie: baseline melee chaser.
+  - Demon: faster melee bruiser with burst pressure.
+  - Imp: ranged attacker with telegraphed projectile shots.
+- Weapon variety:
+  - Shotgun-style primary weapon.
+  - Rifle for fast precise fire.
+  - Alt-fire support (right mouse button) with cooldown-based burst/power shots.
+- Arena variants with encounter elements:
+  - Different cover layouts.
+  - Spawn blockers to reduce unfair near-player spawns.
+  - Interactive hazards (explosive barrels, floor traps, timed doors).
+- Pickup economy (health/ammo) and score milestone rewards (heal + ammo).
 
-## Screenshots
+## UI and Feedback
 
-The game features a Doom-style status bar HUD and first-person shotgun gameplay.
+- Doom-style bottom HUD (ammo, health, score, kills).
+- Top-level objective HUD for wave and enemy-remaining info.
+- Event messages for wave starts, clears, elite spawns, and objective completion.
+- Damage flash, hit marker, and headshot feedback.
+- In-game options menu:
+  - UI scale (small/normal/large)
+  - Mouse sensitivity
+  - FOV
+  - Audio volume
+  - Fullscreen toggle
+
+## Technical Highlights
+
+- Central combat system with damage falloff and headshot detection.
+- Lightweight event bus and service container for reduced coupling.
+- Layered audio manager (ambient/combat/low-health mix) with preload support.
+- Telemetry hooks writing gameplay events to `gameplay.log`.
+- Smoke tests for critical flows in `tests/smoke/test_game_smoke.py`.
 
 ## Requirements
 
-- Python 3.8+
-- Ursina Engine
+- Python 3.11+
+- Windows/Linux/macOS capable of running Ursina + Panda3D
 
-## Installation
+## Setup
 
-1. Clone the repository:
+### Preferred: UV
+
 ```bash
-git clone https://github.com/yourusername/simple_3d_video_game.git
-cd simple_3d_video_game
+uv sync
 ```
 
-2. Create a virtual environment (optional but recommended):
+### Alternative: pip
+
 ```bash
 python -m venv .venv
 .venv\Scripts\activate  # Windows
-source .venv/bin/activate  # Linux/Mac
-```
-
-3. Install dependencies:
-```bash
 pip install -r requirements.txt
 ```
 
-## Running the Game
+## Run
+
+```bash
+uv run python main.py
+```
+
+or (pip/venv workflow):
 
 ```bash
 python main.py
@@ -48,35 +75,30 @@ python main.py
 
 ## Controls
 
-- **WASD**: Move
-- **Mouse**: Look around
-- **Left Click**: Shoot
-- **ESC**: Pause/Menu
+- `WASD`: move
+- `Mouse`: look
+- `Left Click`: fire
+- `Right Click`: alt fire
+- `R`: reload
+- `1` / `2` or mouse wheel: switch weapon
+- `ESC`: pause / resume menu flow
 
-## Project Structure
+## Test
 
+```bash
+uv run python -m unittest tests.smoke.test_game_smoke
 ```
-simple_3d_video_game/
-├── main.py              # Main entry point
-├── config.py            # Game configuration
-├── game_state.py        # Global game state
-├── assets/
-│   └── models/          # 3D models (shotgun, hand, zombie, etc.)
-├── entities/
-│   ├── player.py        # Player controller
-│   ├── enemy.py         # Base enemy class
-│   └── enemies/         # Enemy types (zombie)
-├── weapons/
-│   ├── base_weapon.py   # Base weapon class
-│   └── pistol.py        # Shotgun weapon
-├── ui/
-│   ├── hud.py           # Doom-style HUD
-│   └── menu.py          # Main menu
-├── systems/
-│   └── combat_system.py # Combat/damage system
-└── world/               # Level/world generation
-```
+
+## Key Files
+
+- `main.py`: game loop, waves, spawning, objective flow, hazards integration
+- `config.py`: tunable constants and typed config structures
+- `entities/`: player, enemies, pickups, hazards
+- `weapons/`: base weapon, shotgun-style primary, rifle
+- `ui/`: menu/options and HUD
+- `systems/`: combat, audio manager, telemetry
+- `core/`: event bus and shared service container
 
 ## License
 
-MIT License
+MIT

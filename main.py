@@ -107,7 +107,6 @@ class Game:
         # Clear entities from any prior run and start wave progression
         self.clear_enemies()
         self.clear_pickups()
-        self.clear_hazards()
         if Services.audio_manager:
             Services.audio_manager.start_layers()
         self.start_wave(1)

@@ -103,7 +103,7 @@ class Pistol(BaseWeapon):
     def alt_fire(self, owner):
         """Close-range burst spread shot."""
         pellets = 6
-        ammo_cost = 3
+        ammo_cost = self.alt_fire_ammo_cost()
         if self.ammo_current < ammo_cost:
             return 0
 
@@ -115,6 +115,9 @@ class Pistol(BaseWeapon):
 
         self._animate_recoil(kick=0.13, rise=0.06)
         return ammo_cost
+
+    def alt_fire_ammo_cost(self):
+        return 3
 
     def _animate_recoil(self, kick, rise):
         self.position = self.default_position + Vec3(0, rise, -kick)

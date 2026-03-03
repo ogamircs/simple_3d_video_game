@@ -98,7 +98,7 @@ class FloorTrap(Entity):
 
         for target in targets:
             if distance(self.position, target.position) <= 1.4:
-                target.take_damage(int(TRAP_DAMAGE * time.dt), source=self)
+                target.take_damage(TRAP_DAMAGE * time.dt, source=self)
 
 
 class TimedDoor(Entity):

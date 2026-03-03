@@ -67,7 +67,7 @@ class Rifle(BaseWeapon):
 
     def alt_fire(self, owner):
         """Power shot with long cooldown and high penetration-like damage."""
-        ammo_cost = 6
+        ammo_cost = self.alt_fire_ammo_cost()
         if self.ammo_current < ammo_cost:
             return 0
 
@@ -93,6 +93,9 @@ class Rifle(BaseWeapon):
 
         self._animate_recoil(0.1, 0.05)
         return ammo_cost
+
+    def alt_fire_ammo_cost(self):
+        return 6
 
     def _animate_recoil(self, kick, rise):
         self.position = self.default_position + Vec3(0, rise, -kick)

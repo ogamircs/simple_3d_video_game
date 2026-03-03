@@ -359,6 +359,7 @@ class MainMenu(Entity):
         self.restart_button.enabled = True
         self.pause_options_button.enabled = True
         self.quit_to_menu_button.enabled = True
+        self.quit_to_menu_button.y = -0.37
 
         # Hide game over and options elements
         self.game_over_title.enabled = False

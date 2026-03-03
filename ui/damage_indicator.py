@@ -10,7 +10,8 @@ class DamageIndicator(Entity):
     """Screen overlay that flashes red when damaged."""
 
     def __init__(self, **kwargs):
-        super().__init__(parent=camera.ui, **kwargs)
+        kwargs.setdefault('parent', camera.ui)
+        super().__init__(**kwargs)
 
         # Full screen overlay
         self.overlay = Entity(

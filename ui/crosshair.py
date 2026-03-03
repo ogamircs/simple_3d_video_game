@@ -10,7 +10,8 @@ class Crosshair(Entity):
     """Aiming crosshair in the center of the screen."""
 
     def __init__(self, **kwargs):
-        super().__init__(parent=camera.ui, **kwargs)
+        kwargs.setdefault('parent', camera.ui)
+        super().__init__(**kwargs)
 
         size = CROSSHAIR_SIZE
         gap = CROSSHAIR_GAP

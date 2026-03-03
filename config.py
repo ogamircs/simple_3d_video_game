@@ -10,6 +10,7 @@ WINDOW_TITLE = "Doom-like FPS"
 WINDOW_SIZE = (1280, 720)
 FULLSCREEN = False
 SHOW_FPS = True
+DEFAULT_FOV = 90
 
 # =============================================================================
 # PLAYER SETTINGS
@@ -105,6 +106,38 @@ CROSSHAIR_THICKNESS = 0.003
 
 DAMAGE_FLASH_INTENSITY = 0.4
 DAMAGE_FLASH_DURATION = 0.3
+
+# Typography and menu sizing
+UI_FONT_PRIMARY = 'OpenSans-Regular.ttf'
+UI_FONT_MONO = 'VeraMono.ttf'
+
+MENU_TITLE_SCALE = 2.4
+MENU_SUBTITLE_SCALE = 1.1
+MENU_BODY_TEXT_SCALE = 0.8
+MENU_BUTTON_SCALE = (0.58, 0.12)
+MENU_BUTTON_TEXT_SCALE = 3.4
+
+HUD_VALUE_TEXT_SCALE = 1.7
+HUD_LABEL_TEXT_SCALE = 0.72
+
+UI_SCALE_PRESETS = {
+    'small': 0.9,
+    'normal': 1.0,
+    'large': 1.15,
+}
+
+
+class RuntimeSettings:
+    """Mutable runtime settings controlled from the options menu."""
+    ui_scale_name = 'normal'
+    mouse_sensitivity = MOUSE_SENSITIVITY
+    audio_volume = 0.5
+    fullscreen = FULLSCREEN
+    fov = DEFAULT_FOV
+
+    @classmethod
+    def ui_scale(cls):
+        return UI_SCALE_PRESETS.get(cls.ui_scale_name, 1.0)
 
 # =============================================================================
 # LEVEL SETTINGS

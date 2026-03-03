@@ -9,7 +9,7 @@ from ursina import (
 from ursina.prefabs.first_person_controller import FirstPersonController
 from config import (
     PLAYER_SPEED, PLAYER_SPRINT_MULTIPLIER, PLAYER_MAX_HEALTH,
-    PLAYER_HEIGHT, MOUSE_SENSITIVITY, GameState
+    PLAYER_HEIGHT, RuntimeSettings, GameState
 )
 
 
@@ -21,7 +21,10 @@ class Player(FirstPersonController):
 
         # Override default settings
         self.speed = PLAYER_SPEED
-        self.mouse_sensitivity = Vec2(MOUSE_SENSITIVITY, MOUSE_SENSITIVITY)
+        self.mouse_sensitivity = Vec2(
+            RuntimeSettings.mouse_sensitivity,
+            RuntimeSettings.mouse_sensitivity
+        )
         self.height = PLAYER_HEIGHT
         self.camera_pivot.y = PLAYER_HEIGHT * 0.9
 
@@ -176,3 +179,7 @@ class Player(FirstPersonController):
     def get_shoot_direction(self):
         """Get the direction for shooting (camera forward)."""
         return camera.forward
+
+    def set_mouse_sensitivity(self, sensitivity):
+        """Apply runtime mouse sensitivity updates from options."""
+        self.mouse_sensitivity = Vec2(sensitivity, sensitivity)

@@ -5,7 +5,7 @@ A first-person shooter with enemies that chase you, shooting mechanics, and heal
 from ursina import *
 from config import (
     WINDOW_TITLE, FULLSCREEN, SHOW_FPS,
-    GameState, DEFAULT_LEVEL_SIZE, WALL_HEIGHT
+    GameState, DEFAULT_LEVEL_SIZE, WALL_HEIGHT, RuntimeSettings
 )
 import game_state
 
@@ -21,6 +21,22 @@ class Game:
         self.hud = None
         self.menu = None
         self.score = 0
+
+    def apply_runtime_settings(self, rebuild_hud=False):
+        """Apply mutable settings changed from the options panel."""
+        from ursina.audio import Audio
+
+        window.fullscreen = RuntimeSettings.fullscreen
+        camera.fov = RuntimeSettings.fov
+        Audio.volume_multiplier = RuntimeSettings.audio_volume
+
+        if self.player:
+            self.player.set_mouse_sensitivity(RuntimeSettings.mouse_sensitivity)
+
+        if rebuild_hud and self.player and self.hud:
+            from ui.hud import HUD
+            self.hud.cleanup()
+            self.hud = HUD(self.player)
 
     def start_game(self):
         """Initialize and start a new game."""
@@ -41,6 +57,9 @@ class Game:
         # Create HUD
         from ui.hud import HUD
         self.hud = HUD(self.player)
+
+        # Apply live-configurable options (FOV, sensitivity, volume, UI scale)
+        self.apply_runtime_settings()
 
         # Spawn initial enemies
         self.spawn_enemies()
@@ -219,7 +238,10 @@ def input(key):
         if game_state.game.state == GameState.PLAYING:
             game_state.game.pause()
         elif game_state.game.state == GameState.PAUSED:
-            game_state.game.resume()
+            if game_state.game.menu and game_state.game.menu.mode == 'options':
+                game_state.game.menu.on_options_back()
+            else:
+                game_state.game.resume()
 
 
 def main():
@@ -244,6 +266,7 @@ def main():
     # Create game instance and store in game_state
     game = Game()
     game_state.game = game
+    game.apply_runtime_settings()
 
     # Create menu
     from ui.menu import MainMenu

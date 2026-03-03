@@ -3,7 +3,12 @@ Health Bar UI Component
 Displays player health as a visual bar.
 """
 from ursina import Entity, Text, camera, color
-from config import HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT, HEALTH_BAR_POSITION
+from config import (
+    HEALTH_BAR_WIDTH,
+    HEALTH_BAR_HEIGHT,
+    HEALTH_BAR_POSITION,
+    UI_FONT_PRIMARY
+)
 
 
 class PlayerHealthBar(Entity):
@@ -53,6 +58,7 @@ class PlayerHealthBar(Entity):
             position=(HEALTH_BAR_POSITION[0], HEALTH_BAR_POSITION[1] + 0.035),
             origin=(-0.5, 0),
             scale=1,
+            font=UI_FONT_PRIMARY,
             color=color.light_gray
         )
 

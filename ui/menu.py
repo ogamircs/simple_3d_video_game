@@ -4,7 +4,7 @@ Main menu, pause menu, game over screen, and options panel.
 """
 from ursina import (
     Entity, Text, Button, camera, color,
-    mouse, application
+    mouse
 )
 from ursina.prefabs.slider import Slider
 from config import (
@@ -90,7 +90,7 @@ class MainMenu(Entity):
         # Controls hint
         self.controls = Text(
             parent=self,
-            text='WASD - Move | Mouse - Look | Click - Shoot | ESC - Pause',
+            text='WASD - Move | Mouse - Look | LMB - Shoot | RMB - Alt Fire | ESC - Pause',
             position=(0, -0.43),
             origin=(0, 0),
             scale=MENU_BODY_TEXT_SCALE,
@@ -530,7 +530,7 @@ class MainMenu(Entity):
 
     def on_quit(self):
         """Quit the game."""
-        application.quit()
+        self.game.quit_game()
 
 
 class MenuButton(Button):

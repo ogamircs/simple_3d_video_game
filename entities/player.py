@@ -40,9 +40,13 @@ class Player(FirstPersonController):
 
         # Initialize pistol
         from weapons.pistol import Pistol
+        from weapons.rifle import Rifle
         pistol = Pistol(parent=self.gun_pivot)
+        rifle = Rifle(parent=self.gun_pivot)
         self.weapons.append(pistol)
+        self.weapons.append(rifle)
         pistol.equip()
+        rifle.holster()
 
         # Damage feedback
         self.damage_cooldown = 0
@@ -94,6 +98,8 @@ class Player(FirstPersonController):
         # Shooting with left mouse button
         if mouse.left and self.current_weapon:
             self.current_weapon.try_fire(self)
+        if mouse.right and self.current_weapon:
+            self.current_weapon.try_alt_fire(self)
 
         # Update damage cooldown
         if self.damage_cooldown > 0:

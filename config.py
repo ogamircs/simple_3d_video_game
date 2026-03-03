@@ -2,6 +2,7 @@
 Game Configuration Constants
 All game settings and tunable parameters in one place.
 """
+from dataclasses import dataclass
 
 # =============================================================================
 # WINDOW SETTINGS
@@ -41,6 +42,14 @@ WEAPONS = {
         'spread': 0.15,
         'ammo_max': 24,
         'ammo_per_clip': 6,
+    },
+    'rifle': {
+        'damage': 9,
+        'fire_rate': 0.12,
+        'range': 120,
+        'spread': 0.01,
+        'ammo_max': 90,
+        'ammo_per_clip': 30,
     },
 }
 
@@ -168,6 +177,91 @@ AMMO_PICKUP_VALUE = 8
 SCORE_REWARD_STEP = 50
 SCORE_REWARD_HEAL = 15
 SCORE_REWARD_AMMO = 6
+
+# =============================================================================
+# P2/P3 CONTENT SETTINGS
+# =============================================================================
+ENEMY_STAGGER_THRESHOLD = 14
+ENEMY_STAGGER_CHANCE = 0.3
+ENEMY_STAGGER_DURATION = 0.28
+
+ALT_FIRE_COOLDOWN_DEFAULT = 2.0
+RIFLE_ALT_FIRE_COOLDOWN = 3.5
+
+ARENA_LAYOUT_VARIANTS = 3
+EXPLOSIVE_BARRELS_PER_LAYOUT = 4
+FLOOR_TRAPS_PER_LAYOUT = 3
+TRAP_DAMAGE = 18
+TRAP_PERIOD = 2.2
+BARREL_EXPLOSION_RADIUS = 5.2
+BARREL_EXPLOSION_DAMAGE = 38
+SPAWN_BLOCKER_RADIUS = 8
+SPAWN_BLOCKERS = [
+    (0, 0, 0),
+    (8, 0, 0),
+    (-8, 0, 0),
+    (0, 0, 8),
+    (0, 0, -8),
+]
+
+# =============================================================================
+# P4 AUDIO/VFX SETTINGS
+# =============================================================================
+AMBIENT_TRACK = 'sine'
+COMBAT_TRACK = 'noise'
+LOW_HEALTH_TRACK = 'sine'
+COMBAT_AUDIO_MIN = 0.08
+COMBAT_AUDIO_MAX = 0.34
+LOW_HEALTH_AUDIO_LEVEL = 0.22
+
+# =============================================================================
+# P5 TELEMETRY SETTINGS
+# =============================================================================
+TELEMETRY_LOG_PATH = 'gameplay.log'
+TELEMETRY_ENABLED = True
+
+
+@dataclass(frozen=True)
+class WeaponConfig:
+    damage: int
+    fire_rate: float
+    range: float
+    spread: float
+    ammo_max: int
+
+
+@dataclass(frozen=True)
+class EnemyConfig:
+    health: int
+    damage: int
+    speed: float
+    attack_range: float
+    attack_cooldown: float
+    detection_range: float
+
+
+WEAPON_CONFIGS = {
+    name: WeaponConfig(
+        damage=data['damage'],
+        fire_rate=data['fire_rate'],
+        range=data['range'],
+        spread=data['spread'],
+        ammo_max=data['ammo_max'],
+    )
+    for name, data in WEAPONS.items()
+}
+
+ENEMY_CONFIGS = {
+    name: EnemyConfig(
+        health=data['health'],
+        damage=data['damage'],
+        speed=data['speed'],
+        attack_range=data['attack_range'],
+        attack_cooldown=data['attack_cooldown'],
+        detection_range=data['detection_range'],
+    )
+    for name, data in ENEMIES.items()
+}
 
 # =============================================================================
 # GAME STATES

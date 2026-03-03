@@ -7,6 +7,7 @@ from config import (
     DAMAGE_FALLOFF_START, DAMAGE_FALLOFF_END,
     DAMAGE_MINIMUM_MULTIPLIER, HEADSHOT_MULTIPLIER
 )
+from core.services import Services
 
 
 class CombatSystem:
@@ -24,7 +25,7 @@ class CombatSystem:
             hit_position: World position of the hit (for headshots)
         """
         if not hasattr(target, 'take_damage'):
-            return 0
+            return {'damage': 0, 'headshot': False}
 
         final_damage = damage
 
@@ -35,16 +36,34 @@ class CombatSystem:
             )
 
         # Headshot bonus
+        is_headshot = False
         if hit_position and hasattr(target, 'world_position'):
-            final_damage = CombatSystem.calculate_headshot(
-                final_damage, hit_position, target
-            )
+            is_headshot = CombatSystem.is_headshot(hit_position, target)
+            if is_headshot:
+                final_damage *= HEADSHOT_MULTIPLIER
 
         # Apply the damage
         final_damage = int(final_damage)
         target.take_damage(final_damage, source=source)
 
-        return final_damage
+        if Services.telemetry:
+            Services.telemetry.log(
+                'damage_applied',
+                damage=final_damage,
+                headshot=is_headshot,
+                target_type=getattr(target, 'enemy_type', target.__class__.__name__)
+            )
+
+        if Services.event_bus:
+            Services.event_bus.emit(
+                'damage_applied',
+                damage=final_damage,
+                headshot=is_headshot,
+                target=target,
+                source=source
+            )
+
+        return {'damage': final_damage, 'headshot': is_headshot}
 
     @staticmethod
     def calculate_falloff(damage, source_pos, target_pos):
@@ -75,17 +94,16 @@ class CombatSystem:
         return damage * multiplier
 
     @staticmethod
-    def calculate_headshot(damage, hit_position, target):
+    def is_headshot(hit_position, target):
         """
-        Apply headshot multiplier if hit is in upper portion of target.
+        Return True if hit is in upper portion of target.
 
         Args:
-            damage: Current damage value
             hit_position: World position of hit
             target: Target entity
 
         Returns:
-            Adjusted damage value
+            Boolean indicating headshot.
         """
         # Get target's height
         target_height = getattr(target, 'scale_y', 1)
@@ -98,10 +116,7 @@ class CombatSystem:
         # Upper 30% is considered headshot zone
         headshot_threshold = target_height * 0.7
 
-        if hit_height > headshot_threshold:
-            return damage * HEADSHOT_MULTIPLIER
-
-        return damage
+        return hit_height > headshot_threshold
 
     @staticmethod
     def is_line_of_sight(from_entity, to_entity, ignore_list=None):

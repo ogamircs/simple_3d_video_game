@@ -11,9 +11,15 @@ from config import (
     BASE_SPAWN_INTERVAL, SPAWN_INTERVAL_DECAY, MIN_SPAWN_INTERVAL,
     WAVE_BREAK_DURATION, SPAWN_MIN_PLAYER_DISTANCE, SPAWN_DIRECTOR_LOS_ATTEMPTS,
     PICKUP_MAX_ACTIVE, PICKUP_SPAWN_COOLDOWN, HEALTH_PICKUP_VALUE, AMMO_PICKUP_VALUE,
-    SCORE_REWARD_STEP, SCORE_REWARD_HEAL, SCORE_REWARD_AMMO
+    SCORE_REWARD_STEP, SCORE_REWARD_HEAL, SCORE_REWARD_AMMO,
+    ARENA_LAYOUT_VARIANTS, EXPLOSIVE_BARRELS_PER_LAYOUT, FLOOR_TRAPS_PER_LAYOUT,
+    SPAWN_BLOCKER_RADIUS, SPAWN_BLOCKERS
 )
 import game_state
+from core.event_bus import EventBus
+from core.services import Services
+from systems.audio_manager import AudioManager
+from systems.telemetry import Telemetry
 
 
 class Game:
@@ -24,6 +30,7 @@ class Game:
         self.player = None
         self.enemies = []
         self.pickups = []
+        self.hazards = []
         self.level_geometry = []
         self.hud = None
         self.menu = None
@@ -40,6 +47,15 @@ class Game:
         self.next_score_reward = SCORE_REWARD_STEP
         self.spawn_points = []
         self.pickup_points = []
+        self.layout_variant = 0
+
+        # Shared services (P5 decoupling).
+        Services.event_bus = EventBus()
+        Services.telemetry = Telemetry()
+        Services.audio_manager = AudioManager()
+
+        Services.event_bus.subscribe('enemy_killed', self._on_enemy_killed_event)
+        Services.event_bus.subscribe('damage_applied', self._on_damage_event)
 
     def apply_runtime_settings(self, rebuild_hud=False):
         """Apply mutable settings changed from the options panel."""
@@ -91,6 +107,8 @@ class Game:
         # Clear entities from any prior run and start wave progression
         self.clear_enemies()
         self.clear_pickups()
+        if Services.audio_manager:
+            Services.audio_manager.start_layers()
         self.start_wave(1)
 
         # Lock mouse for FPS controls
@@ -147,27 +165,53 @@ class Game:
             )
             self.level_geometry.append(wall)
 
-        # Add some pillars for cover
-        pillar_positions = [
-            (-10, 0, 10), (10, 0, 10), (-10, 0, -10), (10, 0, -10),
-            (0, 0, 15), (0, 0, -15), (15, 0, 0), (-15, 0, 0),
-        ]
+        # Procedural arena variant with lane-friendly cover placement.
+        self.layout_variant = random.randint(0, ARENA_LAYOUT_VARIANTS - 1)
+        if self.layout_variant == 0:
+            pillar_positions = [(-12, 0, 12), (12, 0, 12), (-12, 0, -12), (12, 0, -12), (0, 0, 16), (0, 0, -16)]
+        elif self.layout_variant == 1:
+            pillar_positions = [(-16, 0, 0), (16, 0, 0), (-8, 0, 14), (8, 0, 14), (-8, 0, -14), (8, 0, -14)]
+        else:
+            pillar_positions = [(-14, 0, 8), (14, 0, 8), (-14, 0, -8), (14, 0, -8), (0, 0, 18), (0, 0, -18)]
 
         for pos in pillar_positions:
             pillar = Entity(
                 model='cube',
-                position=(pos[0], WALL_HEIGHT/2, pos[2]),
-                scale=(2, WALL_HEIGHT, 2),
+                position=(pos[0], WALL_HEIGHT / 2, pos[2]),
+                scale=(2.1, WALL_HEIGHT, 2.1),
                 color=color.brown,
                 collider='box'
             )
             self.level_geometry.append(pillar)
+
+        # Lane walls create safer/reachable traversal routes through arena center.
+        lane_walls = [
+            (-6, WALL_HEIGHT / 2, 0, 1, WALL_HEIGHT, 10),
+            (6, WALL_HEIGHT / 2, 0, 1, WALL_HEIGHT, 10),
+        ]
+        if self.layout_variant == 1:
+            lane_walls = [
+                (0, WALL_HEIGHT / 2, -6, 10, WALL_HEIGHT, 1),
+                (0, WALL_HEIGHT / 2, 6, 10, WALL_HEIGHT, 1),
+            ]
+        for lx, ly, lz, sx, sy, sz in lane_walls:
+            lane = Entity(
+                model='cube',
+                position=(lx, ly, lz),
+                scale=(sx, sy, sz),
+                color=color.rgb(100, 90, 90),
+                collider='box'
+            )
+            self.level_geometry.append(lane)
+
+        self._spawn_hazards()
 
         # Spawn/pickup points used by the wave director.
         self.spawn_points = [
             (20, 0, 20), (-20, 0, 20), (20, 0, -20), (-20, 0, -20),
             (0, 0, 22), (22, 0, 0), (-22, 0, 0), (0, 0, -22),
             (-8, 0, 22), (8, 0, -22), (22, 0, 8), (-22, 0, -8),
+            (17, 0, 14), (-17, 0, -14), (14, 0, -17), (-14, 0, 17),
         ]
         self.pickup_points = [
             (-12, 0.6, 0), (12, 0.6, 0), (0, 0.6, 12), (0, 0.6, -12),
@@ -189,6 +233,37 @@ class Game:
                 destroy(pickup)
         self.pickups = []
 
+    def clear_hazards(self):
+        """Destroy active hazards."""
+        for hazard in self.hazards:
+            if hazard:
+                destroy(hazard)
+        self.hazards = []
+
+    def _spawn_hazards(self):
+        """Place interactive hazards into the active arena layout."""
+        from entities.hazards import ExplosiveBarrel, FloorTrap, TimedDoor
+
+        self.clear_hazards()
+        barrel_positions = [(-18, 0.7, 4), (18, 0.7, -4), (-4, 0.7, -18), (4, 0.7, 18), (0, 0.7, 14), (0, 0.7, -14)]
+        trap_positions = [(-10, 0.02, 0), (10, 0.02, 0), (0, 0.02, 10), (0, 0.02, -10), (0, 0.02, 0)]
+
+        random.shuffle(barrel_positions)
+        random.shuffle(trap_positions)
+
+        for pos in barrel_positions[:EXPLOSIVE_BARRELS_PER_LAYOUT]:
+            barrel = ExplosiveBarrel(position=pos)
+            self.hazards.append(barrel)
+
+        for pos in trap_positions[:FLOOR_TRAPS_PER_LAYOUT]:
+            trap = FloorTrap(position=pos)
+            self.hazards.append(trap)
+
+        door_positions = [(-2, 1.6, 0), (2, 1.6, 0)]
+        for pos in door_positions:
+            door = TimedDoor(position=pos)
+            self.hazards.append(door)
+
     def start_wave(self, wave_number):
         """Initialize a wave with scaling enemy count and spawn pace."""
         if wave_number > self.max_waves:
@@ -208,13 +283,31 @@ class Game:
 
         if self.hud:
             self.hud.show_event(f'Wave {wave_number} started', duration=2.0)
+        if Services.event_bus:
+            Services.event_bus.emit('wave_started', wave=wave_number, target=self.wave_target_enemies)
+        if Services.telemetry:
+            Services.telemetry.log('wave_started', wave=wave_number, target=self.wave_target_enemies)
 
     def _spawn_wave_enemy(self):
         """Spawn one enemy using the spawn director."""
         from entities.enemies.zombie import Zombie
+        from entities.enemies.demon import Demon
+        from entities.enemies.imp import Imp
 
         position = self._choose_spawn_position()
-        enemy = Zombie(position=position)
+        enemy_cls = Zombie
+        elite = False
+
+        # Wave-based roster unlocks.
+        roll = random.random()
+        if self.current_wave >= 3 and roll > 0.72:
+            enemy_cls = Demon
+            elite = True
+        elif self.current_wave >= 2 and roll > 0.55:
+            enemy_cls = Imp
+            elite = True
+
+        enemy = enemy_cls(position=position)
         enemy.target = self.player
 
         # Mild wave scaling.
@@ -226,6 +319,17 @@ class Game:
 
         self.enemies.append(enemy)
         self.wave_spawned_enemies += 1
+
+        if elite and self.hud:
+            self.hud.show_event(f'{enemy.enemy_type.upper()} spawned', duration=1.5)
+        if Services.telemetry:
+            Services.telemetry.log(
+                'enemy_spawned',
+                enemy_type=enemy.enemy_type,
+                wave=self.current_wave,
+                x=round(enemy.x, 2),
+                z=round(enemy.z, 2)
+            )
 
     def _choose_spawn_position(self):
         """Choose a spawn point away from player LOS when possible."""
@@ -244,6 +348,8 @@ class Game:
             dist_to_player = distance(Vec3(*position), self.player.position)
             if dist_to_player < SPAWN_MIN_PLAYER_DISTANCE:
                 continue
+            if self._is_in_spawn_blocker(position):
+                continue
 
             if dist_to_player > fallback_distance:
                 fallback = position
@@ -253,6 +359,14 @@ class Game:
                 return position
 
         return fallback
+
+    def _is_in_spawn_blocker(self, position):
+        """Prevent unfair near-center spawns around blocker zones."""
+        for blocker in SPAWN_BLOCKERS:
+            if distance(Vec3(*position), Vec3(*blocker)) <= SPAWN_BLOCKER_RADIUS:
+                if self.player and distance(self.player.position, Vec3(*blocker)) < SPAWN_BLOCKER_RADIUS * 1.5:
+                    return True
+        return False
 
     def _has_line_of_sight_from_player(self, position):
         """Return True if the player has direct line of sight to position."""
@@ -296,6 +410,8 @@ class Game:
                 self.wave_break_timer = WAVE_BREAK_DURATION
                 if self.hud:
                     self.hud.show_event('Wave cleared', duration=1.8)
+                if Services.telemetry:
+                    Services.telemetry.log('wave_cleared', wave=self.current_wave, score=self.score)
 
             return
 
@@ -364,6 +480,11 @@ class Game:
 
     def on_pickup_collected(self, pickup, player):
         """Show pickup feedback in HUD."""
+        if Services.event_bus:
+            Services.event_bus.emit('pickup_collected', pickup_type=pickup.pickup_type, value=pickup.value)
+        if Services.telemetry:
+            Services.telemetry.log('pickup_collected', pickup_type=pickup.pickup_type, value=pickup.value)
+
         if not self.hud:
             return
         if pickup.pickup_type == 'health':
@@ -392,19 +513,30 @@ class Game:
     def game_over(self):
         """Handle game over state."""
         self.state = GameState.GAME_OVER
+        self.wave_in_progress = False
+        if Services.audio_manager:
+            Services.audio_manager.stop()
         mouse.locked = False
         mouse.visible = True
         if self.menu:
             self.menu.show_game_over(self.score)
+        if Services.telemetry:
+            Services.telemetry.log('game_over', score=self.score, wave=self.current_wave)
 
     def victory(self):
         """Handle successful completion of all waves."""
         self.state = GameState.VICTORY
         self.wave_in_progress = False
+        if Services.audio_manager:
+            Services.audio_manager.stop()
         mouse.locked = False
         mouse.visible = True
         if self.menu:
             self.menu.show_victory(score=self.score, waves=self.current_wave)
+        if self.hud:
+            self.hud.show_event('Objective complete!', duration=2.5)
+        if Services.telemetry:
+            Services.telemetry.log('victory', score=self.score, wave=self.current_wave)
 
     def restart(self):
         """Restart the game."""
@@ -413,14 +545,19 @@ class Game:
             destroy(self.player)
         self.clear_enemies()
         self.clear_pickups()
+        self.clear_hazards()
         if self.hud:
             self.hud.cleanup()
+        if Services.audio_manager:
+            Services.audio_manager.stop()
 
         # Start fresh
         self.start_game()
 
     def quit_game(self):
         """Quit to main menu or exit."""
+        if Services.audio_manager:
+            Services.audio_manager.stop()
         application.quit()
 
     def update(self):
@@ -431,6 +568,7 @@ class Game:
         # Remove dead entities from active lists.
         self.enemies = [e for e in self.enemies if e and e.is_alive]
         self.pickups = [p for p in self.pickups if p and p.enabled]
+        self.hazards = [h for h in self.hazards if h and h.enabled]
 
         # Check player death
         if self.player and not self.player.is_alive:
@@ -439,14 +577,30 @@ class Game:
 
         self._update_wave_progress()
         self._update_pickup_spawner()
+        if Services.audio_manager and self.player:
+            Services.audio_manager.update_layers(
+                enemies_alive=len(self.enemies),
+                player_health_pct=self.player.health_percentage
+            )
 
     def on_enemy_killed(self, enemy):
         """Called when an enemy is killed."""
         self.score += 10
+        if Services.telemetry:
+            Services.telemetry.log('score_changed', score=self.score)
 
         while self.score >= self.next_score_reward:
             self._grant_score_reward()
             self.next_score_reward += SCORE_REWARD_STEP
+
+    def _on_enemy_killed_event(self, enemy):
+        """Event-bus callback for enemy kill notifications."""
+        # Placeholder hook keeps event bus connected for future systems.
+        _ = enemy
+
+    def _on_damage_event(self, damage, headshot, target, source):
+        """Event-bus callback for damage notifications."""
+        _ = (damage, headshot, target, source)
 
     def _grant_score_reward(self):
         """Convert score milestones into survivability utility."""
@@ -515,6 +669,8 @@ def main():
     # Create game instance and store in game_state
     game = Game()
     game_state.game = game
+    if Services.audio_manager:
+        Services.audio_manager.preload_sounds()
     game.apply_runtime_settings()
 
     # Create menu
